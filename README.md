@@ -1,93 +1,103 @@
-# BadgeProxy
+# Aiursoft.BadgeProxy
 
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/blob/master/LICENSE)
+[![Pipeline stat](https://gitlab.aiursoft.com/aiursoft/badgeproxy/badges/master/pipeline.svg)](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/pipelines)
+[![Test Coverage](https://gitlab.aiursoft.com/aiursoft/badgeproxy/badges/master/coverage.svg)](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/pipelines)
+[![NuGet version (Aiursoft.BadgeProxy)](https://img.shields.io/nuget/v/Aiursoft.BadgeProxy.svg)](https://www.nuget.org/packages/Aiursoft.BadgeProxy/)
+[![Man hours](https://manhours.aiursoft.com/r/gitlab.aiursoft.com/aiursoft/BadgeProxy.svg)](https://manhours.aiursoft.com/r/gitlab.aiursoft.com/aiursoft/BadgeProxy.html)
+[![Docker](https://img.shields.io/docker/pulls/aiursoft/badgeproxy.svg)](https://hub.docker.com/r/aiursoft/badgeproxy)
 
+BadgeProxy is a proxy service and CLI tool for GitLab pipeline status and test coverage badge SVGs.
 
-## Getting started
+## Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **High-Performance Caching**: In-memory caching with configurable TTL to reduce load on the GitLab API.
+- **Private Repository Support**: Transparently resolves branch pipeline and test coverage metrics even for private repositories where `default_branch` is restricted to Guest tokens.
+- **Concurrency Limiting**: Built-in semaphore to throttle concurrent upstream requests and protect against rate-limiting.
+- **Health Check Probe**: Built-in `--healthcheck` client option for easy integration with Docker health checks and container orchestrators.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Install
 
-## Add your files
+Requirements:
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+1. [.NET 10 SDK](http://dot.net/)
 
+Run the following command to install this tool:
+
+```bash
+dotnet tool install --global Aiursoft.BadgeProxy
 ```
-cd existing_repo
-git remote add origin https://gitlab.aiursoft.com/aiursoft/badgeproxy.git
-git branch -M master
-git push -uf origin master
-```
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+After getting the binary, run it directly in the terminal:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```bash
+$ badgeproxy --help
+Description:
+  BadgeProxy is a proxy service for GitLab pipeline status and coverage badge SVGs.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Usage:
+  badgeproxy [options]
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Options:
+  -p, --port <port>              The port to listen for the server. [default: 5000]
+  --gitlab-url <gitlab-url>      The GitLab instance URL. [default: https://gitlab.aiursoft.com]
+  --gitlab-token <gitlab-token>  The GitLab Personal Access Token for querying badges.
+  --healthcheck                  Run health check against the local running service.
+  --version                      Show version information
+  -?, -h, --help                 Show help and usage information
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Environment Variables
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+You can also pass the GitLab access token via environment variable:
 
-## License
-For open source projects, say how it is licensed.
+```bash
+export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
+badgeproxy --port 5000
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Endpoints
+
+BadgeProxy serves badge SVGs matching the GitLab badge URL structure:
+
+- Pipeline status badge:
+  `GET /{namespace}/{project}/badges/{branch}/pipeline.svg`
+- Test coverage badge:
+  `GET /{namespace}/{project}/badges/{branch}/coverage.svg`
+
+## Run in Docker
+
+First, install Docker [here](https://docs.docker.com/get-docker/).
+
+Then run the following commands in a Linux shell:
+
+```bash
+image=aiursoft/badgeproxy
+appName=badgeproxy
+
+sudo docker pull $image
+sudo docker run -d \
+  --name $appName \
+  --restart unless-stopped \
+  -p 5000:5000 \
+  -e GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx" \
+  $image
+```
+
+The docker image has the following context:
+
+| Properties  | Value                 |
+|-------------|-----------------------|
+| Image       | aiursoft/badgeproxy   |
+| Ports       | 5000                  |
+| Binary path | /app/badgeproxy       |
+
+## How to contribute
+
+There are many ways to contribute to the project: logging bugs, submitting pull requests, reporting issues, and creating suggestions.
+
+Even if you have push rights on the repository, you should create a personal fork and create feature branches there when you need them. This keeps the main repository clean and your workflow cruft out of sight.
+
+We're also interested in your feedback on the future of this project. You can submit a suggestion or feature request through the issue tracker. To make this process more effective, we're asking that these include more information to help define them more clearly.
