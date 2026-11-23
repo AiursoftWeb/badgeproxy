@@ -1,4 +1,4 @@
-# Aiursoft.BadgeProxy
+# Aiursoft BadgeProxy
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/blob/master/LICENSE)
 [![Pipeline stat](https://gitlab.aiursoft.com/aiursoft/badgeproxy/badges/master/pipeline.svg)](https://gitlab.aiursoft.com/aiursoft/badgeproxy/-/pipelines)
@@ -99,8 +99,8 @@ export GITLAB_URL=https://gitlab.aiursoft.com
 | Option | Description |
 | --- | --- |
 | `-p, --port <port>` | HTTP port. Defaults to `5000`. |
-| `--gitlab-url <url>` | GitLab origin. Defaults to `GITLAB_URL` or `http://gitlab_gitlab`. |
-| `--gitlab-token <token>` | GitLab access token. Defaults to `GITLAB_ACCESS_TOKEN`. Required when serving requests. |
+| `-u, --gitlab-url <url>` | GitLab origin. Defaults to `GITLAB_URL` or `http://gitlab_gitlab`. |
+| `-t, --gitlab-token <token>` | GitLab access token. Defaults to `GITLAB_ACCESS_TOKEN`. Required when serving requests. |
 | `--healthcheck` | Probe the local service and exit. |
 | `--version` | Show version information. |
 | `-?, -h, --help` | Show help and usage information. |
