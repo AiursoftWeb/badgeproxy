@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Version>10.0.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>badgeproxy</AssemblyName>
+    <RootNamespace>Aiursoft.BadgeProxy</RootNamespace>
+    <IsTestProject>false</IsTestProject>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>badgeproxy</ToolCommandName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Company>Aiursoft</Company>
+    <Product>BadgeProxy</Product>
+    <Authors>Aiursoft</Authors>
+    <Description>BadgeProxy is a proxy service for GitLab pipeline status and coverage badge SVGs.</Description>
+    <PackageId>Aiursoft.BadgeProxy</PackageId>
+    <PackageTags>cli nuget dotnet csproj gitlab badge badgeproxy</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/badgeproxy</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/badgeproxy.git</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aiursoft.BadgeProxy.Tests" />
+    <PackageReference Include="Aiursoft.CommandFramework" Version="10.0.16" />
+    <None Include="../../README.md" Pack="true" PackagePath="." />
+  </ItemGroup>
+</Project>
