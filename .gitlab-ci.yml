@@ -34,13 +34,20 @@ before_script:
       <configuration>
           <packageSources>
               <clear />
-              <add key="aiursoft" value="https://nuget.aiursoft.com/v3/index.json" />
+              <add key="aiursoft" value="https://nupkg.aiursoft.com/v3/index.json" />
           </packageSources>
       </configuration>
       NUGETEOF
-    - "export PATH=$PATH:$HOME/.dotnet/tools"
-    - "which jb || dotnet tool install JetBrains.ReSharper.GlobalTools --global $CUSTOM_NUGET_ARGS -v d"
-    - "which reportgenerator || dotnet tool install dotnet-reportgenerator-globaltool --global $CUSTOM_NUGET_ARGS -v d"
+    # External tools come from the Runner. Never install or update them here.
+    - export PATH="$HOME/.dotnet/tools:$PATH"
+    - command -v dotnet          || { echo "Runner is missing dotnet." >&2; exit 1; }
+    - command -v jb              || { echo "Runner is missing jb." >&2; exit 1; }
+    - command -v reportgenerator || { echo "Runner is missing reportgenerator." >&2; exit 1; }
+    # Refresh internal clients globally from the internal source only.
+    - dotnet tool update --global Aiursoft.S360.Client --source https://nupkg.aiursoft.com/v3/index.json
+    - dotnet tool update --global Aiursoft.Apkg.Client --source https://nupkg.aiursoft.com/v3/index.json
+    - s360 --version
+    - apkg --version
     - 'echo "Hostname: $(hostname)"'
     - "dotnet --info"
 
@@ -48,14 +55,14 @@ variables:
     GIT_CLONE_PATH: "$CI_BUILDS_DIR/$CI_PROJECT_NAME/$CI_PIPELINE_ID/$CI_JOB_ID"
     MSBUILDDISABLENODEREUSE: "1"
     DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    npm_config_registry: "https://nopkg.aiursoft.com/npm/"
+    npm_config_replace_registry_host: "always"
     S360_PURPOSE: review
     S360_CHECK_KEY: ""
-    CUSTOM_NUGET_ARGS: "--add-source https://nuget.aiursoft.com/v3/index.json --configfile ./nuget.config"
 
 s360:
     stage: s360
     script:
-        - dotnet tool update Aiursoft.S360.Client --global $CUSTOM_NUGET_ARGS
         - dotnet restore "$SOLUTION_FILE" --use-lock-file --disable-parallel --no-cache --configfile nuget.config --packages "$CI_PROJECT_DIR/obj/s360-packages"
         - s360 check --path "$SOLUTION_FILE" --ecosystem nuget --purpose "$S360_PURPOSE"
     artifacts:
@@ -67,10 +74,24 @@ s360:
         # Policy rejection must stop immediately, without retrying the audit.
         when: runner_system_failure
 
+s360_npm:
+    stage: s360
+    script:
+        - s360 check --path . --ecosystem npm --npm-lockfile-only --npm-registry "$npm_config_registry" --purpose "$S360_PURPOSE"
+    rules:
+        - exists:
+              - "**/package.json"
+    retry:
+        max: 2
+        when: runner_system_failure
+
 build:
     stage: build
     needs:
         - s360
+        - job: s360_npm
+          optional: true
+          artifacts: false
     script:
         # Job directories differ. Restore the audited versions and content hashes
         # from the lock files instead of reusing another job's absolute paths.
@@ -130,7 +151,7 @@ validate_docker:
         - build
     script:
         - docker buildx use aiur-global-builder
-        - docker buildx build . --platform linux/amd64,linux/arm64
+        - docker buildx build . --platform linux/amd64,linux/arm64 --build-arg NUGET_SOURCE=https://nupkg.aiursoft.com/v3/index.json --build-arg NPM_REGISTRY=https://nopkg.aiursoft.com/npm/
     rules:
         - exists:
               - Dockerfile
@@ -140,7 +161,6 @@ validate_apkg:
     needs:
         - build
     script:
-        - "which apkg || dotnet tool install Aiursoft.Apkg.Client --global $CUSTOM_NUGET_ARGS -v d"
         - |
             aosproj_files=$(find . -type f -name '*.aosproj')
             if [ -z "$aosproj_files" ]; then
@@ -165,11 +185,11 @@ pack:
           optional: true
     script:
         - dotnet build -maxcpucount:1 --configuration Release --no-self-contained -p:GeneratePackageOnBuild=false "$SOLUTION_FILE"
-        - dotnet pack -maxcpucount:1 --configuration Release --no-build "$SOLUTION_FILE"
+        - dotnet pack -maxcpucount:1 --configuration Release --no-build --output "$CI_PROJECT_DIR/artifacts/nuget" "$SOLUTION_FILE"
     artifacts:
         expire_in: 1 week
         paths:
-            - "**/*.nupkg"
+            - "artifacts/nuget/*.nupkg"
 
 deploy_local_nuget:
     stage: deploy
@@ -178,8 +198,10 @@ deploy_local_nuget:
         - pack
     script:
         - |
-            for file in $(find . -name "*.nupkg"); do
-              dotnet nuget push "$file" --api-key "$LOCAL_NUGET_API_KEY" --source "https://nuget.aiursoft.com/v3/index.json" --skip-duplicate || exit 1;
+            for file in artifacts/nuget/*.nupkg; do
+              [ -f "$file" ] || continue
+              : "${NUPKG_API_KEY:?NuGet publishing credential is required}"
+              dotnet nuget push "$file" --api-key "$NUPKG_API_KEY" --source "https://nupkg.aiursoft.com/v3/index.json" --timeout 1200 --skip-duplicate || exit 1
             done
     rules:
         - if: '$CI_COMMIT_BRANCH == "master"'
@@ -191,8 +213,10 @@ deploy_public_nuget:
         - pack
     script:
         - |
-            for file in $(find . -name "*.nupkg"); do
-              dotnet nuget push "$file" --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --timeout 1200 --skip-duplicate || exit 1;
+            for file in artifacts/nuget/*.nupkg; do
+              [ -f "$file" ] || continue
+              : "${NUGET_API_KEY:?NuGet publishing credential is required}"
+              dotnet nuget push "$file" --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --timeout 1200 --skip-duplicate || exit 1
             done
     rules:
         - if: '$CI_COMMIT_BRANCH == "master"'
@@ -219,7 +243,7 @@ deploy_docker_all:
         - docker buildx use aiur-global-builder
         # Both required destinations must succeed. China replication is handled
         # asynchronously by puller_cn after the home-registry push completes.
-        - docker buildx build . --platform linux/amd64,linux/arm64 --tag "$LOCAL_TARGET_COM" --tag "$PUBLIC_TARGET" --push
+        - docker buildx build . --platform linux/amd64,linux/arm64 --build-arg NUGET_SOURCE=https://nupkg.aiursoft.com/v3/index.json --build-arg NPM_REGISTRY=https://nopkg.aiursoft.com/npm/ --tag "$LOCAL_TARGET_COM" --tag "$PUBLIC_TARGET" --push
 
     rules:
         - if: '$CI_COMMIT_BRANCH == "master"'
